@@ -13,47 +13,49 @@ public class CameraTracking : MonoBehaviour
     
     //COEF
     Vector2 ROTATE_SPEED = new Vector2(4f,4f);    //âÒì]ë¨ìx(å„ÅXUIÇ©ÇÁê›íËÇ≈Ç´ÇÈÇÊÇ§Ç…ÇµÇΩÇ¢)
+    const float BOT_VERT_LIMIT = -58f;
+    const float TOP_VERT_LIMIT = 85f;
+
     Vector3 dir;
+    float _vertAngle = 0;
+
 
     void Rotate()
     {
-        transform.position = Player.Instance.transform.position + dir * 1f;
+        transform.position = Player.Instance.PlayerHipPos + dir * 1f;
 
         float nowMouseValueX = Input.GetAxis("Mouse X");
         float nowMouseValueY = Input.GetAxis("Mouse Y");
 
         var newAngle = Vector3.zero;
         newAngle.x = ROTATE_SPEED.x * nowMouseValueX;
+        transform.RotateAround(Player.Instance.PlayerHipPos, Vector3.up, newAngle.x);
+
         newAngle.y = ROTATE_SPEED.y * nowMouseValueY;
-
-        transform.RotateAround(Player.Instance.transform.position, Vector3.up, newAngle.x);
-        transform.RotateAround(Player.Instance.transform.position, transform.right, -newAngle.y);
-        AdjustCameraPos();
-
+        _vertAngle += newAngle.y;
+        if (_vertAngle < TOP_VERT_LIMIT && _vertAngle > BOT_VERT_LIMIT)
+        {
+            transform.RotateAround(Player.Instance.PlayerHipPos, transform.right, -newAngle.y);
+        }
+            AdjustCameraPos();
     }
 
 
     void AdjustCameraPos()
     {
-        dir = transform.position - Player.Instance.transform.position;
-        float dis   = Vector3.Distance(Player.Instance.transform.position, transform.position);
+        dir = transform.position - Player.Instance.PlayerHipPos;
+        float dis   = Vector3.Distance(Player.Instance.PlayerHipPos, transform.position);
         RaycastHit hit;
-        if (Physics.Raycast(Player.Instance.transform.position, dir, out hit, dis))
+        if (Physics.Raycast(Player.Instance.PlayerHipPos, dir, out hit, dis))
         {
-            Debug.Log("tag:" + hit.collider.gameObject.tag);
-            if (hit.collider.gameObject.tag == "obj")
-            {
-                transform.position = hit.point;
-            }
-
-            Debug.DrawRay(Player.Instance.transform.position, dir * dis, Color.red);
+            transform.position = hit.point;
         }
     }
 
 
     void Initialize()
     {
-        dir = transform.position - Player.Instance.transform.position;
+        dir = transform.position - Player.Instance.PlayerHipPos;
     }
 
 
@@ -66,6 +68,13 @@ public class CameraTracking : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        Rotate();
+        if(!GameManager.Instance._goal.Value && GameManager.Instance._isGame.Value)
+        {
+            Rotate();
+        }
+        else
+        {
+
+        }
     }
 }
